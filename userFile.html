@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding-top: 8%;
+            justify-content: center;
+        }
+
+        #main_table {
+            width: 50%;
+            /* border-collapse: collapse; */
+        }
+
+        #main_table td,
+        #main_table th {
+            border: 2px solid black;
+        }
+
+        #main_table th {
+            color: white;
+            background-color: blue;
+            font-size: 20px;
+        }
+
+        #main_table tr {
+            text-align: center;
+            font-size: 18px;
+            height: 26.8px;
+        }
+
+        #table_div {
+            display: flex;
+            justify-content: center;
+        }
+
+        #btn_div {
+            padding-top: 2%;
+            display: flex;
+            justify-content: center;
+        }
+
+        #btn_div button {
+            font-size: 16px;
+            font-weight: bold;
+            width: 10%;
+            margin-left: 4%;
+            margin-right: 4%;
+            border-width: 2px;
+            border-color: white black black white;
+        }
+
+        #btn_div button:active {
+            border-color: black white white black;
+        }
+
+        #pop-up_window {
+            position: absolute;
+            top: calc(50% - 150px);
+            left: calc(50% - 175px);
+            width: 350px;
+            height: 150px;
+            background-color: #BFFFFF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #pop_label_div {
+            display: grid;
+            width: 95%;
+            height: 100px;
+            grid-template-columns: 1fr 2fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            align-items: center;
+        }
+
+        #pop_label_div label {
+            font-size: 16px;
+        }
+
+        #pop_label_div input {
+            font-size: 16px;
+            height: 19px;
+        }
+
+        #pop_btn_div {
+            padding-top: 2%;
+            display: flex;
+            justify-content: center;
+            width: 95%;
+        }
+
+        #pop_btn_div button {
+            font-size: 16px;
+            font-weight: bold;
+            width: 70px;
+            margin-left: 6%;
+            margin-right: 6%;
+            border-width: 2px;
+            border-color: white black black white;
+        }
+
+        #pop_btn_div button:active {
+            border-color: black white white black;
+        }
+
+        .selectedRow {
+            background-color: #97CBFF;
+        }
+    </style>
+</head>
+
+<body bgcolor="#BFFFBF">
+    <div id="container">
+        <div id="table_div">
+            <table id="main_table">
+                <thead id="main_table_thead">
+                    <tr>
+                        <th>ClientIP</th>
+                        <th>UserName</th>
+                        <th>Password</th>
+                        <th>UpdateTm</th>
+                    </tr>
+                </thead>
+                <tbody id="main_table_tbody">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="btn_div">
+            <button id="btn_append">新增</button>
+            <button id="btn_update">修改</button>
+            <button id="btn_delete">刪除</button>
+        </div>
+    </div>
+
+    <div id="pop-up_window" style="display: none;">
+        <div id="pop_label_div">
+            <label for="pop_username">UserName</label>
+            <input type="text" id="pop_username">
+            <label for="pop_password">Password</label>
+            <input type="text" id="pop_password">
+            <label for="pop_updatetm">UpdateTm</label>
+            <input type="datetime-local" id="pop_updatetm" readonly="true">
+        </div>
+        <div id="pop_btn_div">
+            <button id="pop_btn_submit">確定</button>
+            <button id="pop_btn_close">取消</button>
+        </div>
+    </div>
+
+    <script src="jquery-3.6.1.min.js"></script>
+    <script>
+
+        function createTr(row) {
+            for (let i = 0; i < row; i++) {
+                const tr = document.createElement('tr');
+                for (let j = 0; j < 4; j++) {
+                    const td = document.createElement('td');
+                    tr.appendChild(td);
+                }
+                document.getElementById('main_table_tbody').appendChild(tr);
+            }
+        }
+
+        function initialTable() {
+            $.ajax({
+                url: "userFile.php",
+                type: "GET",
+                async: false,
+                dataType: "json",
+                success: function (json_data) {
+                    $("#main_table_tbody").html("");
+                    for (let i = 0; i < Object.keys(json_data["result"]).length; i++) {
+                        const tr = $("<tr></tr>");
+                        tr.append($("<td></td>").text(json_data["result"][i]["ClientIP"]));
+                        tr.append($("<td></td>").text(json_data["result"][i]["UserName"]));
+                        tr.append($("<td></td>").text(json_data["result"][i]["Password"]));
+                        tr.append($("<td></td>").text(json_data["result"][i]["UpdateTm"]));
+
+                        tr.click(function () {
+                            $(this).siblings().removeClass('selectedRow');
+                            $(this).toggleClass('selectedRow');
+                        })
+
+                        $("#main_table_tbody").append(tr);
+                    }
+
+                    const row = 15 - Object.keys(json_data["result"]).length;
+
+                    if (row > 0) {
+                        createTr(row);
+                    }
+                }
+            });
+        }
+        initialTable();
+
+        function popUpWindowAppend() {
+            $('#pop-up_window').show();
+
+            $('#pop_username').val("");
+            $('#pop_password').val("");
+            $('#pop_updatetm').val("");
+
+            const nowDate = new Date(+new Date() + 8 * 3600 * 1000);
+            const nowDataStr = nowDate.toISOString().split('T')[0] + " " + nowDate.toISOString().split('T')[1].substr(0, 5)
+
+            $('#pop_updatetm').val(nowDataStr);
+        }
+
+        function popUpWindowUpdate() {
+            $('#pop_username').val("");
+            $('#pop_password').val("");
+            $('#pop_updatetm').val("");
+
+            const selectRow = $("#main_table_tbody>tr.selectedRow");
+            if (selectRow.length) {
+                const selectAccount = selectRow[0].children[1].textContent;
+                const selectPasswd = selectRow[0].children[2].textContent;
+
+                const nowDate = new Date(+new Date() + 8 * 3600 * 1000);
+                const nowDataStr = nowDate.toISOString().split('T')[0] + " " + nowDate.toISOString().split('T')[1].substr(0, 5)
+
+                $('#pop_username').val(selectAccount);
+                $('#pop_password').val(selectPasswd);
+                $('#pop_updatetm').val(nowDataStr);
+
+                $('#pop-up_window').show();
+            }
+        }
+
+        $('#btn_append').on('click', function () { popUpWindowAppend(); });
+        $('#btn_update').on('click', function () { popUpWindowUpdate(); });
+
+        function submitTo() {
+            const username = $('#pop_username').val();
+            const password = $('#pop_password').val();
+            const updatetm = $('#pop_updatetm').val();
+
+            const reqData = {
+                'username': username,
+                'password': password,
+                'updatetm': updatetm
+            };
+
+            $.ajax({
+                url: "userFile.php",
+                type: "POST",
+                async: false,
+                data: reqData,
+                dataType: "json",
+                success: function (json_data) {
+                    if (json_data['result']) {
+                        alert('操作成功!');
+                    } else {
+                        alert('操作失敗!');
+                    }
+                }
+            })
+
+            $('#pop-up_window').hide();
+            initialTable();
+        }
+        $('#pop_btn_submit').on('click', function () { submitTo(); });
+
+        function deleteFrom() {
+            const selectRow = $("#main_table_tbody>tr.selectedRow");
+            if (selectRow.length) {
+                const selectAccount = selectRow[0].children[1].textContent;
+
+                let checkDelete = confirm('要將 ' + selectAccount + ' 刪除嗎?')
+                if (checkDelete) {
+                    $.ajax({
+                        url: "userFile.php?username=" + selectAccount,
+                        type: "DELETE",
+                        async: false,
+                        dataType: "json",
+                        success: function (json_data) {
+                            if (json_data['result']) {
+                                alert('操作成功!');
+                            } else {
+                                alert('操作失敗!');
+                            }
+                        }
+                    })
+                    initialTable();
+                }
+            }
+        }
+        $('#btn_delete').on('click', function () { deleteFrom(); });
+        
+
+        function closeWindow() {
+            $('#pop-up_window').hide();
+        }
+        $('#pop_btn_close').on('click', function () { closeWindow(); });
+
+    </script>
+</body>
+
+</html>
